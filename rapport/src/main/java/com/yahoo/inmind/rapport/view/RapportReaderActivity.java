@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Camera;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.AnimationDrawable;
@@ -317,7 +318,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         // so that they are mutually exclusive buttons
         assistant_button.setOnClickListener(new OnClickListener(){
             public void onClick(View v) {
-//                ViewHelper.getInstance().getModelDistributions();
+                ViewHelper.getInstance().getModelDistributions();
                 assistant_button_clicked = true;
                 assistant_button.setBackgroundResource(R.drawable.assistant_button_pressed);
                 if (stream_button_clicked) {
@@ -352,7 +353,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
         news_button.setOnClickListener(new OnClickListener(){
             public void onClick(View v) {
-                ViewHelper.getInstance().getModelDistributions();
+
                 news_button_clicked = true;
                 news_button.setBackgroundResource(R.drawable.news_button_pressed);
                 if (stream_button_clicked) {
@@ -473,7 +474,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         });
 
 //        // Let the initial view be the assistant view
-        assistant_button.performClick();
+        news_mode_button.performClick();
 
 //         //-----------------------------------------------------------------------------------
 
@@ -526,6 +527,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             CameraPreview.mCamera.setPreviewCallback(null);
             CameraPreview.mCamera.release();
             CameraPreview.mCamera = null;
+            CameraPreview.removeCallbackFlag = true;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -640,9 +642,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         super.onResume();
         //TODO: ojrl
         try {
-            if (CameraPreview.mCamera != null) {
+//            if (CameraPreview.mCamera != null) {
                 CameraPreview.mCamera.setPreviewCallback(null);
-            }
+//            }
             mCameraManager.onResume();
             mPreview.setCamera(mCameraManager.getCamera());
         } catch (Exception e) {

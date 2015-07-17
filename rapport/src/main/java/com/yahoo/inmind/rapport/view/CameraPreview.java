@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
-    private SurfaceHolder mHolder;
+    public static SurfaceHolder mHolder;
     public static Camera mCamera;
     private static final String TAG = "camera";
     private Size mPreviewSize;
@@ -34,12 +34,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private int width = 320;
     private int height = 240;
     private byte[] jdata;
+    public static boolean removeCallbackFlag = false;
 
     @SuppressWarnings("deprecation")
 	public CameraPreview(Context context, Camera camera) {
         super(context);
         mCamera = camera;
-
         mHolder = getHolder();
         mHolder.addCallback(this);
         // deprecated setting, but required on Android versions prior to 3.0
@@ -68,17 +68,25 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mFrameLength = mPreviewSize.width * mPreviewSize.height * ImageFormat.getBitsPerPixel(format) / 8;
     }
 
+
+//    public void removeCallbackWhenPausing() {
+//        mHolder.removeCallback(this);
+//    }
+
+
     public void surfaceCreated(SurfaceHolder holder) {
-        try {
-        	Parameters parameters = mCamera.getParameters();
+        if (!removeCallbackFlag) {
+            try {
+                Parameters parameters = mCamera.getParameters();
 
-            mCamera.setDisplayOrientation(90);
+                mCamera.setDisplayOrientation(90);
 
-            mCamera.setParameters(parameters);
-            mCamera.setPreviewDisplay(holder);
-            mCamera.startPreview();
-        } catch (IOException e) {
-            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+                mCamera.setParameters(parameters);
+                mCamera.setPreviewDisplay(holder);
+                mCamera.startPreview();
+            } catch (IOException e) {
+                Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+            }
         }
     }
 
