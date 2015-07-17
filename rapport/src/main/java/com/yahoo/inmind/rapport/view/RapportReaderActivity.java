@@ -317,7 +317,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         // so that they are mutually exclusive buttons
         assistant_button.setOnClickListener(new OnClickListener(){
             public void onClick(View v) {
-                ViewHelper.getInstance().getModelDistributions();
+//                ViewHelper.getInstance().getModelDistributions();
                 assistant_button_clicked = true;
                 assistant_button.setBackgroundResource(R.drawable.assistant_button_pressed);
                 if (stream_button_clicked) {
@@ -352,6 +352,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
         news_button.setOnClickListener(new OnClickListener(){
             public void onClick(View v) {
+                ViewHelper.getInstance().getModelDistributions();
                 news_button_clicked = true;
                 news_button.setBackgroundResource(R.drawable.news_button_pressed);
                 if (stream_button_clicked) {
@@ -472,7 +473,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         });
 
 //        // Let the initial view be the assistant view
-//        assistant_button.performClick();
+        assistant_button.performClick();
 
 //         //-----------------------------------------------------------------------------------
 
@@ -504,15 +505,31 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onStop() {
         super.onStop();
         Log.d("ERRORCHECK", "Closing android socket client");
-		if (CameraPreview.mCamera != null) {
-			CameraPreview.mCamera.stopPreview();
-			CameraPreview.mCamera.release();
-			CameraPreview.mCamera = null;
-	    }
+
         if( mThread != null ) {
             mThread.close();
             mThread = null;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        if (CameraPreview.mCamera != null) {
+////            CameraPreview.mCamera.stopPreview();
+//            CameraPreview.mCamera.release();
+//            CameraPreview.mCamera = null;
+//        }
+//        mCameraManager.onPause();
+        try {
+            CameraPreview.mCamera.stopPreview();
+            CameraPreview.mCamera.setPreviewCallback(null);
+            CameraPreview.mCamera.release();
+            CameraPreview.mCamera = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     // The following two functions are used for the woz view.
@@ -622,8 +639,15 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onResume() {
         super.onResume();
         //TODO: ojrl
-        mCameraManager.onResume();
-        mPreview.setCamera(mCameraManager.getCamera());
+        try {
+            if (CameraPreview.mCamera != null) {
+                CameraPreview.mCamera.setPreviewCallback(null);
+            }
+            mCameraManager.onResume();
+            mPreview.setCamera(mCameraManager.getCamera());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static class PlaceholderFragment extends Fragment {

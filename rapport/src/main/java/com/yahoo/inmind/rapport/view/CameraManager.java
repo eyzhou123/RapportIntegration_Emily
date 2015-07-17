@@ -27,7 +27,9 @@ public class CameraManager {
 	}
 	
 	public void onPause() {
-		releaseCamera();
+//		setPreviewCallback(null);
+//		getHolder().removeCallback(mPreview);
+//		releaseCamera();
 	}
 	
 	public void onResume() {
