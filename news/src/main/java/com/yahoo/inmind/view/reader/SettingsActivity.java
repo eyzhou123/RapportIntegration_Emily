@@ -50,7 +50,11 @@ public class SettingsActivity extends ActionBarActivity { //PreferencesActivity
     //Enable the back button in the action bar
   	@Override
   	public boolean onOptionsItemSelected(MenuItem menuItem)
-  	{       
+  	{
+        if (menuItem.getTitle() == null) {
+            onBackPressed();
+            return true;
+        }
   		if(((String) menuItem.getTitle()).equals(getResources().getString(R.string.news_name)))
   			onBackPressed();
   	    return true;

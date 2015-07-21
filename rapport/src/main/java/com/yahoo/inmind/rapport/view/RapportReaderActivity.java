@@ -3,13 +3,21 @@ package com.yahoo.inmind.rapport.view;
 import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Camera;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.AnimationDrawable;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Display;
@@ -34,14 +42,25 @@ import com.unity3d.player.UnityPlayer;
 import com.yahoo.inmind.control.reader.ReaderController;
 import com.yahoo.inmind.control.util.Constants;
 import com.yahoo.inmind.rapport.R;
+import com.yahoo.inmind.view.handler.UIHandler;
 import com.yahoo.inmind.view.reader.ReaderMainActivity;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 
 
-public class RapportReaderActivity extends ReaderMainActivity implements DataListener {
+public class RapportReaderActivity extends ReaderMainActivity implements DataListener, TextToSpeech.OnInitListener, RecognitionListener {
 
     private static final int MAX_BUFFER = 15;
     public static CameraPreview mPreview;
@@ -80,6 +99,18 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     private SocketClient socketclient;
     private AudioClient audioclient;
     private ReaderController readerController;
+
+    private Socket socket_NLG;
+    private volatile boolean stop_NLG_thread = false;
+
+    //TTS object
+    private TextToSpeech myTTS;
+    //status check code
+    private final int MY_DATA_CHECK_CODE = 0;
+    private final int REQ_CODE_SPEECH_INPUT = 100;
+    private SpeechRecognizer speechRecognizer;
+    private int currentNewsId;
+    private int newsItemNum;
 
 
     // Handle switching views from the slide out drawer (called from RapportDrawerManager.java)
@@ -127,9 +158,66 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         stream_button.performClick();
     }
 
+    class ClientThreadForNLG implements Runnable {
+        @Override
+        public void run() {
+            Log.d("ERRORCHECK", "running NLG thread");
+            try {
+                socket_NLG = new Socket();
+                socket_NLG.connect(new InetSocketAddress("128.237.208.154", 8008), 0);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket_NLG.getInputStream()));
+                String s;
+
+                while(!stop_NLG_thread){
+                    if(socket_NLG.isConnected()){
+                        s = in.readLine();
+                        if (s != null) {
+                            Log.d("ERRORCHECK", "Server said: " + s);
+                            PrintWriter out = new PrintWriter(socket_NLG.getOutputStream(), true);
+                            if ("REQUEST_PERSON".equals(s)) {
+                                // The following should also print out the distributions
+                                ViewHelper.getInstance().getModelDistributions();
+                                // Distributions are saved to public variable "result"
+                                // Send this over the socket
+                                out.println(ViewHelper.result);
+//                            } else {
+//                                out.println("client is listening\n");
+                            }
+                        }
+                    } else{
+                        break;
+                    }
+//                    PrintWriter out = new PrintWriter(socket_NLG.getOutputStream(), true);
+//                    out.println("client is listening");
+                }
+            } catch (UnknownHostException e1) {
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+//			}
+
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         context = this;
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+        speechRecognizer.setRecognitionListener(this);
+        //speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+        System.out.println("speechRecognizer listener start");
+
+        currentNewsId = 0;
+
+        Intent checkTTSIntent = new Intent();
+        checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
+        //myTTS = new TextToSpeech(this, this);
+
+        new Thread(new ClientThreadForNLG()).start();
 
         //layout activity_browser
         ReaderController.news_browser_layout_id = R.layout.rapport_activity_browser;
@@ -313,6 +401,12 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         mic_button_params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         layoutRel.addView(mic_button, mic_button_params);
 
+        mic_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+            }
+        });
 
         // The following are three onClickListeners for the three view tabs,
         // so that they are mutually exclusive buttons
@@ -511,6 +605,29 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             mThread.close();
             mThread = null;
         }
+
+        stop_NLG_thread = true;
+        if (socket_NLG != null) {
+            try {
+                Log.d("STOPPING", "closing nlg socket");
+                socket_NLG.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+            Log.d("ERRORCHECK", "null nlg socket");
+        }
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+        mThread = new SocketClientAndroid();
+        mThread.start();
+        // Start the NLG and DM sockets
+        stop_NLG_thread = false;
+        new Thread(new ClientThreadForNLG()).start();
     }
 
     @Override
@@ -522,14 +639,19 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 //            CameraPreview.mCamera = null;
 //        }
 //        mCameraManager.onPause();
-        try {
-            CameraPreview.mCamera.stopPreview();
-            CameraPreview.mCamera.setPreviewCallback(null);
-            CameraPreview.mCamera.release();
-            CameraPreview.mCamera = null;
-            CameraPreview.removeCallbackFlag = true;
-        } catch (Exception e) {
-            e.printStackTrace();
+//        try {
+//            CameraPreview.mCamera.stopPreview();
+//            CameraPreview.mCamera.setPreviewCallback(null);
+//            CameraPreview.mCamera.release();
+//            CameraPreview.mCamera = null;
+//            CameraPreview.removeCallbackFlag = true;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+        if( mThread != null ) {
+            mThread.close();
+            mThread = null;
         }
 
     }
@@ -549,7 +671,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
             @Override
             public void run() {
-                Log.d("Stream", "setting imageview");
+                Log.d("Stream", "setting imageView");
                 //mImageView.setImageDrawable(new BitmapDrawable(getResources(), mLastFrame));
                 imageView.setImageBitmap(mLastFrame);
             }
@@ -643,8 +765,12 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         //TODO: ojrl
         try {
 //            if (CameraPreview.mCamera != null) {
-                CameraPreview.mCamera.setPreviewCallback(null);
+//                CameraPreview.mCamera.setPreviewCallback(null);
 //            }
+            if (mThread == null) {
+                mThread = new SocketClientAndroid();
+                mThread.start();
+            }
             mCameraManager.onResume();
             mPreview.setCamera(mCameraManager.getCamera());
         } catch (Exception e) {
@@ -671,6 +797,164 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
             return rootView;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        switch (requestCode){
+            case MY_DATA_CHECK_CODE:{
+                if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                    //the user has the necessary data - create the TTS
+                    myTTS = new TextToSpeech(this, this);
+                } else {
+                    //no data - install it now
+                    Intent installTTSIntent = new Intent();
+                    installTTSIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                    startActivity(installTTSIntent);
+                }
+            }
+            case REQ_CODE_SPEECH_INPUT: {
+                if (resultCode == RESULT_OK && null != intent) {
+                    ArrayList<String> result = intent.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    String str_result = result.get(0);
+
+                    Toast.makeText(context, str_result, Toast.LENGTH_SHORT).show();
+                    Log.d("Speech", "Speech: " + str_result);
+
+                    // scroll news drawer
+                    //if(str_result.contains("next")){
+                    //	Message msg = new Message();
+                    //	msg.what = UIHandler.SCROLL_TO_ITEM;
+                    //	msg.obj = getCurrentFrag().getPluggableAdapterView();
+                    //	msg.arg1 = 2;
+                    //	App.get().getUIHandler().sendMessage(msg);
+                    //
+                    //}
+
+                    //generate backchannel
+                    //String backchannel = backChannelGenerator.generateBackChannel(str_result);
+                    //send to TTS
+                    //speakWords(str_result);
+                    //speakWords(backchannel);
+
+                    //send to Galaxy server
+//                    try {
+//                        PrintWriter out = new PrintWriter(new BufferedWriter(
+//                                new OutputStreamWriter(socket_olympus.getOutputStream())),
+//                                true);
+//                        out.println(str_result);
+//                    } catch (UnknownHostException e) {
+//                        e.printStackTrace();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+                }
+            }
+        }
+
+    }
+
+
+    public void onInit(int status) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onReadyForSpeech(Bundle params) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onBeginningOfSpeech() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onRmsChanged(float rmsdB) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onBufferReceived(byte[] buffer) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onError(int error) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onResults(Bundle results) {
+        //System.out.println("SPEECH!!!!!!!!!");
+        Log.d("Speech", "onResults");
+        ArrayList<String> strlist = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        for (int i = 0; i < strlist.size();i++ ) {
+            Log.d("Speech", "result=" + strlist.get(i));
+        }
+        String result_str = strlist.get(0);
+
+        Toast.makeText(context, result_str, Toast.LENGTH_SHORT).show();
+        Log.d("Speech", "Speech: " + result_str);
+        //speakWords(strlist.get(0));
+
+        //		AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        //        amanager.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
+        //        amanager.setStreamMute(AudioManager.STREAM_ALARM, true);
+        //        amanager.setStreamMute(AudioManager.STREAM_MUSIC, true);
+        //        amanager.setStreamMute(AudioManager.STREAM_RING, true);
+        //        amanager.setStreamMute(AudioManager.STREAM_SYSTEM, true);
+
+//        try {
+//            PrintWriter out = new PrintWriter(new BufferedWriter(
+//                    new OutputStreamWriter(socket_olympus.getOutputStream())),
+//                    true);
+//            out.println(result_str);
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+
+        // scroll news drawer
+        //if(result_str.contains("next")){
+        //	currentNewsId++;
+        //	Message msg = new Message();
+        //	msg.what = UIHandler.SCROLL_TO_ITEM;
+        //	msg.obj = getCurrentFrag().getPluggableAdapterView();
+        //	msg.arg1 = currentNewsId;
+        //	App.get().getUIHandler().sendMessage(msg);
+        //}
+        //this.speakWords(String.valueOf(currentNewsId+1));
+        //
+        //speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+    }
+
+    @Override
+    public void onPartialResults(Bundle partialResults) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onEvent(int eventType, Bundle params) {
+        // TODO Auto-generated method stub
+
     }
 
 }

@@ -169,7 +169,7 @@ public class LocationTracker {
 		/* EZ: sometimes returns null and crashes app, added this check to avoid this */
 		Location loc = freshestLocation(freshest, lastLocation);
 		if (loc == null) {
-			Log.w("ERRORCHECK", "LOCATION is null");
+//			Log.w("ERRORCHECK", "LOCATION is null");
 			return new LocationContext(0.0f, 0.0f, 0L, 0.0f, 0.0f, 0.0f, 0.0f);
 		} else {
 			return new LocationContext(loc);

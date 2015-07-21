@@ -29,6 +29,8 @@ public class ViewHelper {
     private static final int DECISION_TWO = 1;
     private static final int DECISION_THREE = 2;
 
+    public static String result = "";
+
     private ViewHelper(Context context) {
         // Controllers
         SingletonApp.getInstance( context );
@@ -117,12 +119,29 @@ public class ViewHelper {
 
     public void getModelDistributions(){
         MBRequest request = new MBRequest( Constants.MSG_GET_MODEL_DISTRIBUTIONS );
+
         ModelDistribution models = (ModelDistribution) mMB.get(request);
+
 
         // here goes your code... for instance:
         for(String[] model : models.getModels() ){
             Log.e("ViewHelper", "name: " + model[0] + " value: " + model[1] + " description: " + model[2] );
         }
+
+//        String result = "";
+//        for(String[] model : models.getModels() ){
+//            result += "name: " + model[0] + " value: " + model[1] + " description: " + model[2] + ", ";
+//        }
+//        Log.d("ERRORCHECK", result);
+
+
+        result = "DISTRIBUTION ";
+        for(String[] model : models.getModels() ){
+            result += model[0] + ": " + model[1] + ", ";
+        }
+        result += "\n";
+
+//        return result;
     }
 
 

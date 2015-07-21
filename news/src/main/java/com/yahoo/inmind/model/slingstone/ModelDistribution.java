@@ -7,11 +7,11 @@ import java.util.ArrayList;
  */
 public class ModelDistribution {
 
-    private Double model1;
-    private Double model2;
-    private Double model3;
-    private Double model4;
-    private Double model5;
+    private Double model1 = 0.0;
+    private Double model2 = 0.0;
+    private Double model3 = 0.0;
+    private Double model4 = 0.0;
+    private Double model5 = 0.0;
     private transient ArrayList<String[]> models;
 
     public ModelDistribution() {

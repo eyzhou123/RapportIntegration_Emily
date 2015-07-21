@@ -1,0 +1,34 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => unityPlayerNativeActivity/src/main/AndroidManifest.xml
+* assets/ => unityPlayerNativeActivity/src/main/assets/
+* libs/armeabi-v7a/libmain.so => unityPlayerNativeActivity/src/main/jniLibs/armeabi-v7a/libmain.so
+* libs/armeabi-v7a/libmono.so => unityPlayerNativeActivity/src/main/jniLibs/armeabi-v7a/libmono.so
+* libs/armeabi-v7a/libunity.so => unityPlayerNativeActivity/src/main/jniLibs/armeabi-v7a/libunity.so
+* libs/armeabi-v7a/libvhwrapper.so => unityPlayerNativeActivity/src/main/jniLibs/armeabi-v7a/libvhwrapper.so
+* libs/armeabi-v7a/libvhwrapper_copy.so => unityPlayerNativeActivity/src/main/jniLibs/armeabi-v7a/libvhwrapper_copy.so
+* libs/ttsunityplugin.jar => unityPlayerNativeActivity/libs/ttsunityplugin.jar
+* libs/unity-classes.jar => unityPlayerNativeActivity/libs/unity-classes.jar
+* res/ => unityPlayerNativeActivity/src/main/res/
+* src/ => unityPlayerNativeActivity/src/main/java/
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)
