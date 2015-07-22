@@ -592,14 +592,26 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     }
 
     private void closeSocketClient() {
-        audioclient.close();
-        socketclient.close();
+        if (audioclient != null && socketclient != null) {
+            audioclient.close();
+            socketclient.close();
+            audioclient = null;
+            socketclient = null;
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         Log.d("ERRORCHECK", "Closing android socket client");
+
+        if (mPreview != null) {
+            FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
+            preview.removeView(mPreview);
+            mPreview = null;
+        }
+
+        closeSocketClient();
 
         if( mThread != null ) {
             mThread.close();
@@ -655,6 +667,17 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         }
 
     }
+
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        mCameraManager = new CameraManager(this);
+        mPreview = new CameraPreview(this, mCameraManager.getCamera());
+        FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
+        preview.addView(mPreview);
+    }
+
 
     // The following two functions are used for the woz view.
     // They update the imageview as images are grabbed on the server
@@ -755,9 +778,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 //        	ImageView anim = (ImageView) findViewById(2004);
 //        	layoutMain.removeView(anim);
 
-
         }
     }
+
 
     @Override
     protected void onResume() {

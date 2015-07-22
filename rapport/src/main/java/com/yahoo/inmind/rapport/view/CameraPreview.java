@@ -75,23 +75,27 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 
     public void surfaceCreated(SurfaceHolder holder) {
-        if (!removeCallbackFlag) {
-            try {
-                Parameters parameters = mCamera.getParameters();
+        if(mCamera == null) return;
+        try {
+            Parameters parameters = mCamera.getParameters();
 
-                mCamera.setDisplayOrientation(90);
+            mCamera.setDisplayOrientation(90);
 
-                mCamera.setParameters(parameters);
-                mCamera.setPreviewDisplay(holder);
-                mCamera.startPreview();
-            } catch (IOException e) {
-                Log.d(TAG, "Error setting camera preview: " + e.getMessage());
-            }
+            mCamera.setParameters(parameters);
+            mCamera.setPreviewDisplay(holder);
+            mCamera.startPreview();
+        } catch (IOException e) {
+            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
         }
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            mCamera.setPreviewCallback(null);
+            mCamera.release();
+            mCamera = null;
+        }
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
