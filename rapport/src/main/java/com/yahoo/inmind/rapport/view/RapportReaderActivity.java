@@ -10,8 +10,11 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.AnimationDrawable;
 import android.media.AudioManager;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.media.ToneGenerator;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.speech.RecognitionListener;
@@ -47,6 +50,7 @@ import com.yahoo.inmind.view.reader.ReaderMainActivity;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -108,6 +112,8 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     private SpeechRecognizer speechRecognizer;
     private int currentNewsId;
     private int newsItemNum;
+
+
 
 
     // Handle switching views from the slide out drawer (called from RapportDrawerManager.java)
@@ -396,7 +402,29 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         mic_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+//                speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+
+                if (CameraPreview.recording) {
+                    CameraPreview.recorder.stop();
+                    if (CameraPreview.usecamera) {
+                        try {
+                            CameraPreview.mCamera.reconnect();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    // recorder.release();
+                    CameraPreview.recording = false;
+                    Log.v("ERRORCHECK", "Recording Stopped");
+                    // Let's prepareRecorder so we can record again
+                    CameraPreview.prepareRecorder();
+
+
+                } else {
+                    CameraPreview.recording = true;
+                    CameraPreview.recorder.start();
+                    Log.v("ERRORCHECK", "Recording Started");
+                }
             }
         });
 
@@ -647,6 +675,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
         preview.addView(mPreview);
     }
+
+
+
 
 
     // The following two functions are used for the woz view.

@@ -8,6 +8,8 @@ import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Camera.Size;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.os.Environment;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -24,6 +26,8 @@ import java.util.List;
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     public static SurfaceHolder mHolder;
     public static Camera mCamera;
+    public static MediaRecorder recorder;
+    public static CamcorderProfile camcorderProfile;
     private static final String TAG = "camera";
     private Size mPreviewSize;
     private byte[] mImageData;
@@ -34,7 +38,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private int width = 320;
     private int height = 240;
     private byte[] jdata;
-    public static boolean removeCallbackFlag = false;
+
+    public static boolean recording = false;
+    public static boolean usecamera = true;
+    public static boolean previewRunning = false;
 
     @SuppressWarnings("deprecation")
 	public CameraPreview(Context context, Camera camera) {
@@ -44,6 +51,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mHolder.addCallback(this);
         // deprecated setting, but required on Android versions prior to 3.0
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+        camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+
         Parameters params = mCamera.getParameters();
         List<Size> sizes = params.getSupportedPreviewSizes();
         for (Size s : sizes) {
@@ -75,22 +85,34 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
 
     public void surfaceCreated(SurfaceHolder holder) {
+        Log.v("ERRORCHECK", "surfaceCreated");
         if(mCamera == null) return;
-        try {
-            Parameters parameters = mCamera.getParameters();
+        if (usecamera) {
+            try {
+                Parameters parameters = mCamera.getParameters();
 
-            mCamera.setDisplayOrientation(90);
+//                mCamera.setDisplayOrientation(90);
 
-            mCamera.setParameters(parameters);
-            mCamera.setPreviewDisplay(holder);
-            mCamera.startPreview();
-        } catch (IOException e) {
-            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+                mCamera.setParameters(parameters);
+                mCamera.setPreviewDisplay(holder);
+                mCamera.startPreview();
+                previewRunning = true;
+            } catch (IOException e) {
+                Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+            }
         }
+
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if (mCamera != null) {
+        Log.v("ERRORCHECK", "surfaceDestroyed");
+        if (recording) {
+            recorder.stop();
+            recording = false;
+        }
+        recorder.release();
+        if (usecamera && mCamera != null) {
+            previewRunning = false;
             mCamera.stopPreview();
             mCamera.setPreviewCallback(null);
             mCamera.release();
@@ -99,29 +121,94 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        Log.v("ERRORCHECK", "surfaceChanged");
         if (mHolder.getSurface() == null){
           return;
         }
-        
-        try {
-            mCamera.stopPreview();
-            resetBuff();
-            
-        } catch (Exception e){
 
-        }
+        if (!recording && usecamera) {
+            if (previewRunning) {
+                try {
+                    mCamera.stopPreview();
+                    resetBuff();
 
-        try {
-        	
-            mCamera.setPreviewCallback(mPreviewCallback);
-            mCamera.setPreviewDisplay(mHolder);
-            mCamera.startPreview();
+                } catch (Exception e) {
 
-        } catch (Exception e){
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+                }
+            }
+
+            try {
+
+                mCamera.setPreviewCallback(mPreviewCallback);
+                mCamera.setPreviewDisplay(mHolder);
+                mCamera.startPreview();
+                previewRunning = true;
+
+            } catch (Exception e) {
+                Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+            }
+
+            prepareRecorder();
         }
     }
-    
+
+    public static void prepareRecorder() {
+        recorder = new MediaRecorder();
+        recorder.setPreviewDisplay(CameraPreview.mHolder.getSurface());
+
+        if (usecamera) {
+            CameraPreview.mCamera.unlock();
+            recorder.setCamera(CameraPreview.mCamera);
+        }
+
+        recorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+        recorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
+        recorder.setOrientationHint(270);
+        recorder.setProfile(camcorderProfile);
+
+//        if (camcorderProfile.fileFormat == MediaRecorder.OutputFormat.THREE_GPP) {
+//            try {
+//                File newFile = File.createTempFile("videocapture", ".3gp", Environment.getExternalStorageDirectory());
+//                recorder.setOutputFile(newFile.getAbsolutePath());
+//            } catch (IOException e) {
+//                Log.v("ERRORCHECK","Couldn't create file");
+//                e.printStackTrace();
+////                finish();
+//            }
+        if (camcorderProfile.fileFormat == MediaRecorder.OutputFormat.MPEG_4) {
+            try {
+                File newFile = File.createTempFile("videocapture", ".mp4", Environment.getExternalStorageDirectory());
+                recorder.setOutputFile(newFile.getAbsolutePath());
+            } catch (IOException e) {
+                Log.v("ERRORCHECK","Couldn't create file");
+                e.printStackTrace();
+//                finish();
+            }
+        } else {
+            try {
+                File newFile = File.createTempFile("videocapture", ".mp4", Environment.getExternalStorageDirectory());
+                recorder.setOutputFile(newFile.getAbsolutePath());
+            } catch (IOException e) {
+                Log.v("ERRORCHECK","Couldn't create file");
+                e.printStackTrace();
+//                finish();
+            }
+
+        }
+        //recorder.setMaxDuration(50000); // 50 seconds
+        //recorder.setMaxFileSize(5000000); // Approximately 5 megabytes
+
+        try {
+            recorder.prepare();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+//            finish();
+        } catch (IOException e) {
+            e.printStackTrace();
+//            finish();
+        }
+    }
+
     public void setCamera(Camera camera) {
     	mCamera = camera;
     }
@@ -144,6 +231,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         	mLastFrame = null;
     	}
     }
+
+
+
     
     public int getPreviewLength() {
         return mFrameLength;
