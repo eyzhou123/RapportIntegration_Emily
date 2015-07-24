@@ -66,25 +66,22 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     public static CameraPreview mPreview;
     public static CameraManager mCameraManager;
     public static boolean android_is_streaming = true;
-    //private static String server_ip = "128.237.221.118";
-//	public static String server_ip = "10.0.0.8";
     public static String server_ip = "128.237.208.154";
     public static String path = "/Users/eyzhou/Desktop/";
     static SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy_h.mm.ssa");
     static Context context;
     static Button news_button;
     static Button assistant_button;
-    static Button news_mode_button;
+    static Button both_mode_button;
     static Button stream_button;
     private static UnityPlayer mUnityPlayer;
     private static String msg = null;
     private static String timestamp = null;
     private static Date date;
-    AnimationDrawable frameAnimation;
-    //private boolean news_mode_on = false;
+    //private boolean both_mode_on = false;
     private boolean assistant_button_clicked = false;
     private boolean news_button_clicked = false;
-    private boolean news_mode_clicked = false;
+    private boolean both_mode_clicked = false;
     private boolean stream_button_clicked = false;
     private boolean mIsOn = true;
     private SocketClientAndroid mThread;
@@ -144,7 +141,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         msg = "Pressed BOTH VIEW at " + timestamp;
         Log.d("USER DATA", msg);
 
-        news_mode_button.performClick();
+        both_mode_button.performClick();
     }
 
     public static void woz_view() {
@@ -168,6 +165,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket_NLG.getInputStream()));
                 String s;
 
+                // continuously try to read in requests
                 while(!stop_NLG_thread){
                     if(socket_NLG.isConnected()){
                         s = in.readLine();
@@ -175,27 +173,22 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                             Log.d("ERRORCHECK", "Server said: " + s);
                             PrintWriter out = new PrintWriter(socket_NLG.getOutputStream(), true);
                             if ("REQUEST_PERSON".equals(s)) {
-                                // The following should also print out the distributions
+                                // The following should print out the distributions to logcat too
                                 ViewHelper.getInstance().getModelDistributions();
-                                // Distributions are saved to public variable "result"
+                                // Distribution string is saved to public variable "result"
                                 // Send this over the socket
                                 out.println(ViewHelper.result);
-//                            } else {
-//                                out.println("client is listening\n");
                             }
                         }
                     } else{
                         break;
                     }
-//                    PrintWriter out = new PrintWriter(socket_NLG.getOutputStream(), true);
-//                    out.println("client is listening");
                 }
             } catch (UnknownHostException e1) {
                 e1.printStackTrace();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-//			}
 
         }
     }
@@ -278,7 +271,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         final int small_assistant_width = width/4;
         final int assistant_button_width = width/3 - button_margin;
         final int news_button_width = width/3 - button_margin;
-        final int news_mode_button_width = width/3 - button_margin;
+        final int both_mode_button_width = width/3 - button_margin;
         final int button_panel_height = height/16;
 
         //TODO: ojrl
@@ -331,17 +324,17 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         news_button.setLayoutParams(news_button_params);
         button_panel.addView(news_button, news_button_params);
 
-        // News mode changes view to assistant on top of news
-        news_mode_button = new Button(this);
-        news_mode_button.setTextSize(12);
-        news_mode_button.setTextColor(Color.parseColor("#000000"));
-        news_mode_button.setBackgroundColor(Color.parseColor("#0ABEF5"));
-        news_mode_button.setBackgroundResource(R.drawable.news_mode_button);
-        LinearLayout.LayoutParams news_mode_button_params = new LinearLayout.LayoutParams(
-                news_mode_button_width, button_panel_height);
-        news_mode_button_params.setMargins(10, 5, 10, 5);
-        news_mode_button.setLayoutParams(news_mode_button_params);
-        button_panel.addView(news_mode_button, news_mode_button_params);
+        // Both mode changes view to assistant on top of news
+        both_mode_button = new Button(this);
+        both_mode_button.setTextSize(12);
+        both_mode_button.setTextColor(Color.parseColor("#000000"));
+        both_mode_button.setBackgroundColor(Color.parseColor("#0ABEF5"));
+        both_mode_button.setBackgroundResource(R.drawable.both_mode_button);
+        LinearLayout.LayoutParams both_mode_button_params = new LinearLayout.LayoutParams(
+                both_mode_button_width, button_panel_height);
+        both_mode_button_params.setMargins(10, 5, 10, 5);
+        both_mode_button.setLayoutParams(both_mode_button_params);
+        button_panel.addView(both_mode_button, both_mode_button_params);
 
         // Camera rapport_test
         stream_button = new Button(this);
@@ -349,7 +342,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         stream_button.setTextColor(Color.parseColor("#000000"));
         stream_button.setBackgroundColor(Color.parseColor("#0ABEF5"));
         LinearLayout.LayoutParams stream_button_params = new LinearLayout.LayoutParams(
-                news_mode_button_width, button_panel_height);
+                both_mode_button_width, button_panel_height);
         stream_button_params.setMargins(10, 5, 10, 5);
         stream_button.setLayoutParams(stream_button_params);
         button_panel.addView(stream_button, stream_button_params);
@@ -384,7 +377,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
         final RelativeLayout layoutRight = (RelativeLayout) inflate.inflate(
                 R.layout.rapport_fragment_main, null);
-        //layoutRight.setId(R.id.layout_right);
 
         RelativeLayout.LayoutParams relParam = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
@@ -430,9 +422,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height );
                     layoutMain.addView(layoutRight,DrawerLayout.LayoutParams.MATCH_PARENT, assistant_height);
                 }
-                if (news_mode_clicked) {
-                    news_mode_clicked = false;
-                    news_mode_button.setBackgroundResource(R.drawable.news_mode_button);
+                if (both_mode_clicked) {
+                    both_mode_clicked = false;
+                    both_mode_button.setBackgroundResource(R.drawable.both_mode_button);
                     layoutMain.removeView(layoutRight);
                     layoutMain.removeView(layoutLeft);
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height);
@@ -465,9 +457,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                     layoutMain.addView(layoutRight,DrawerLayout.LayoutParams.MATCH_PARENT, assistant_height);
                     layoutLeft.setVisibility(View.VISIBLE);
                 }
-                if (news_mode_clicked) {
-                    news_mode_clicked = false;
-                    news_mode_button.setBackgroundResource(R.drawable.news_mode_button);
+                if (both_mode_clicked) {
+                    both_mode_clicked = false;
+                    both_mode_button.setBackgroundResource(R.drawable.both_mode_button);
                     layoutMain.removeView(layoutRight);
                     layoutMain.removeView(layoutLeft);
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height );
@@ -481,10 +473,10 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         });
 
 
-        news_mode_button.setOnClickListener(new OnClickListener(){
+        both_mode_button.setOnClickListener(new OnClickListener(){
             public void onClick(View v) {
-                news_mode_clicked = true;
-                news_mode_button.setBackgroundResource(R.drawable.news_mode_button_pressed);
+                both_mode_clicked = true;
+                both_mode_button.setBackgroundResource(R.drawable.both_mode_button_pressed);
                 if (stream_button_clicked) {
                     stream_button_clicked = false;
                     closeSocketClient();
@@ -520,13 +512,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             }
         });
 
-        // Woz mode
+        // WoZ mode
         stream_button.setOnClickListener(new OnClickListener(){
             public void onClick(View v) {
-//            	if (stream_button_clicked) {
-//            		layoutMain.removeView(imageView);
-//            		layoutMain.removeView(layoutLeft);
-//            	}
                 if (assistant_button_clicked) {
                     assistant_button_clicked = false;
                     assistant_button.setBackgroundResource(R.drawable.assistant_button);
@@ -539,9 +527,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                     news_button.setBackgroundResource(R.drawable.news_button);
                     layoutMain.removeView(layoutLeft);
                 }
-                if (news_mode_clicked) {
-                    news_mode_clicked = false;
-                    news_mode_button.setBackgroundResource(R.drawable.news_mode_button);
+                if (both_mode_clicked) {
+                    both_mode_clicked = false;
+                    both_mode_button.setBackgroundResource(R.drawable.both_mode_button);
                     layoutMain.removeView(layoutRight);
                     layoutMain.removeView(layoutLeft);
                 }
@@ -561,14 +549,12 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
                     mThread = new SocketClientAndroid();
                     mThread.start();
-                    FrameLayout cam_view = (FrameLayout) findViewById(R.id.rapport_camera_preview);
-                    //       		   cam_view.setVisibility(View.GONE);
                 }
             }
         });
 
 //        // Let the initial view be the assistant view
-        news_mode_button.performClick();
+        both_mode_button.performClick();
 
 //         //-----------------------------------------------------------------------------------
 
@@ -584,7 +570,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     private void openSocketClient() {
         socketclient = new SocketClient();
         socketclient.setOnDataListener(this);
-
     }
 
     private void openAudioClient() {
@@ -645,21 +630,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     @Override
     protected void onPause() {
         super.onPause();
-//        if (CameraPreview.mCamera != null) {
-////            CameraPreview.mCamera.stopPreview();
-//            CameraPreview.mCamera.release();
-//            CameraPreview.mCamera = null;
-//        }
-//        mCameraManager.onPause();
-//        try {
-//            CameraPreview.mCamera.stopPreview();
-//            CameraPreview.mCamera.setPreviewCallback(null);
-//            CameraPreview.mCamera.release();
-//            CameraPreview.mCamera = null;
-//            CameraPreview.removeCallbackFlag = true;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
 
         if( mThread != null ) {
             mThread.close();
@@ -668,10 +638,10 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
     }
 
-
     @Override
     protected void onRestart() {
         super.onRestart();
+        // need a new camera object
         mCameraManager = new CameraManager(this);
         mPreview = new CameraPreview(this, mCameraManager.getCamera());
         FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
@@ -710,7 +680,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             }
             mQueue.add(bufferedImage);
         }
-//		Log.d("ERRORCHECK", "onDirty called");
         paint();
     }
 
@@ -766,19 +735,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
         //TODO: ojrl
         mUnityPlayer.windowFocusChanged(hasFocus);
-
-
-        if (hasFocus) {
-            // Starting the animation when in Focus
-            //frameAnimation.start();
-        } else {
-            // Stoping the animation when not in Focus
-//        	frameAnimation.stop();
-//        	LinearLayout layoutMain = (LinearLayout)findViewById(2003);
-//        	ImageView anim = (ImageView) findViewById(2004);
-//        	layoutMain.removeView(anim);
-
-        }
     }
 
 
@@ -787,9 +743,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         super.onResume();
         //TODO: ojrl
         try {
-//            if (CameraPreview.mCamera != null) {
-//                CameraPreview.mCamera.setPreviewCallback(null);
-//            }
             if (mThread == null) {
                 mThread = new SocketClientAndroid();
                 mThread.start();
