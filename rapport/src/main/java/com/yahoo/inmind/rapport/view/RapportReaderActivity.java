@@ -404,27 +404,27 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             public void onClick(View v) {
 //                speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
 
-                if (CameraPreview.recording) {
-                    CameraPreview.recorder.stop();
-                    if (CameraPreview.usecamera) {
-                        try {
-                            CameraPreview.mCamera.reconnect();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    // recorder.release();
-                    CameraPreview.recording = false;
-                    Log.v("ERRORCHECK", "Recording Stopped");
-                    // Let's prepareRecorder so we can record again
-                    CameraPreview.prepareRecorder();
-
-
-                } else {
-                    CameraPreview.recording = true;
-                    CameraPreview.recorder.start();
-                    Log.v("ERRORCHECK", "Recording Started");
-                }
+//                if (CameraPreview.recording) {
+//                    CameraPreview.recorder.stop();
+//                    if (CameraPreview.usecamera) {
+//                        try {
+//                            CameraPreview.mCamera.reconnect();
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                    // recorder.release();
+//                    CameraPreview.recording = false;
+//                    Log.v("ERRORCHECK", "Recording Stopped");
+//                    // Let's prepareRecorder so we can record again
+//                    CameraPreview.prepareRecorder();
+//
+//
+//                } else {
+//                    CameraPreview.recording = true;
+//                    CameraPreview.recorder.start();
+//                    Log.v("ERRORCHECK", "Recording Started");
+//                }
             }
         });
 
@@ -618,6 +618,22 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         super.onStop();
         Log.d("ERRORCHECK", "Closing android socket client");
 
+        if (CameraPreview.recording) {
+            CameraPreview.recorder.stop();
+            if (CameraPreview.usecamera) {
+                try {
+                    CameraPreview.mCamera.reconnect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            // recorder.release();
+            CameraPreview.recording = false;
+            Log.v("ERRORCHECK", "Recording Stopped");
+            // Let's prepareRecorder so we can record again
+            CameraPreview.prepareRecorder();
+        }
+
         if (mPreview != null) {
             FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
             preview.removeView(mPreview);
@@ -648,6 +664,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     @Override
     protected void onStart(){
         super.onStart();
+
         mThread = new SocketClientAndroid();
         mThread.start();
         // Start the NLG and DM sockets
@@ -674,6 +691,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         mPreview = new CameraPreview(this, mCameraManager.getCamera());
         FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
         preview.addView(mPreview);
+
     }
 
 
@@ -753,9 +771,34 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
                 dialog.show();
                 return true;
+            case R.id.record:
+                if(item.getTitle().equals(new String("Start Recording"))){
+                    item.setTitle("Stop Recording");
+                    if(!CameraPreview.recording) {
+                        CameraPreview.recording = true;
+                        CameraPreview.recorder.start();
+                        Log.v("ERRORCHECK", "Recording Started");
+                    }
+
+                }else{
+                    item.setTitle("Start Recording");
+                    if (CameraPreview.recording) {
+                        CameraPreview.recorder.stop();
+                        if (CameraPreview.usecamera) {
+                            try {
+                                CameraPreview.mCamera.reconnect();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        Log.v("ERRORCHECK", "Recording Stopped");
+                    }
+                }
+                break;
             default:
                 return super.onOptionsItemSelected(item);
         }
+        return true;
     }
 
 
