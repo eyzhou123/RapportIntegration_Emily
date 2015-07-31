@@ -89,6 +89,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     private boolean stream_button_clicked = false;
     private boolean mIsOn = true;
     private SocketClientAndroid mThread;
+    private AndroidAudioClient androidAudioSocket;
     private Button mButton;
     private int mPort = 8880;
     private boolean on_start_page = true;
@@ -438,6 +439,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                 if (stream_button_clicked) {
                     stream_button_clicked = false;
                     closeSocketClient();
+                    closeAndroidClient();
                     layoutMain.removeView(imageView);
                     layoutMain.removeView(layoutLeft);
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height );
@@ -473,6 +475,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                 if (stream_button_clicked) {
                     stream_button_clicked = false;
                     closeSocketClient();
+                    closeAndroidClient();
                     layoutMain.removeView(imageView);
                     layoutMain.removeView(layoutLeft);
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height );
@@ -508,6 +511,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                 if (stream_button_clicked) {
                     stream_button_clicked = false;
                     closeSocketClient();
+                    closeAndroidClient();
                     layoutMain.removeView(imageView);
                     layoutMain.removeView(layoutLeft);
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height );
@@ -573,10 +577,13 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                     openAudioClient();
                     audioclient.start();
                     Log.d("ERRORCHECK", "started clients");
-                    layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, height - small_assistant_height);
+                    layoutMain.addView(layoutLeft, DrawerLayout.LayoutParams.MATCH_PARENT, height - small_assistant_height);
 
                     mThread = new SocketClientAndroid();
                     mThread.start();
+
+                    androidAudioSocket = new AndroidAudioClient();
+                    androidAudioSocket.start();
                 }
             }
         });
@@ -610,6 +617,18 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             socketclient.close();
             audioclient = null;
             socketclient = null;
+        }
+    }
+
+    private void closeAndroidClient() {
+        if( mThread != null ) {
+            mThread.close();
+            mThread = null;
+        }
+
+        if (androidAudioSocket != null) {
+            androidAudioSocket.close();
+            androidAudioSocket = null;
         }
     }
 
@@ -647,6 +666,11 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             mThread = null;
         }
 
+        if (androidAudioSocket != null) {
+            androidAudioSocket.close();
+            androidAudioSocket = null;
+        }
+
         stop_NLG_thread = true;
         if (socket_NLG != null) {
             try {
@@ -665,8 +689,12 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onStart(){
         super.onStart();
 
-        mThread = new SocketClientAndroid();
-        mThread.start();
+//        mThread = new SocketClientAndroid();
+//        mThread.start();
+//
+//        androidAudioSocket = new AndroidAudioClient();
+//        androidAudioSocket.start();
+
         // Start the NLG and DM sockets
         stop_NLG_thread = false;
         new Thread(new ClientThreadForNLG()).start();
@@ -676,11 +704,15 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onPause() {
         super.onPause();
 
-        if( mThread != null ) {
-            mThread.close();
-            mThread = null;
-        }
-
+//        if( mThread != null ) {
+//            mThread.close();
+//            mThread = null;
+//        }
+//
+//        if (androidAudioSocket != null) {
+//            androidAudioSocket.close();
+//            androidAudioSocket = null;
+//        }
     }
 
     @Override
@@ -817,10 +849,16 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         super.onResume();
         //TODO: ojrl
         try {
-            if (mThread == null) {
-                mThread = new SocketClientAndroid();
-                mThread.start();
-            }
+//            if (mThread == null) {
+//                mThread = new SocketClientAndroid();
+//                mThread.start();
+//            }
+//
+//            if (androidAudioSocket != null) {
+//                androidAudioSocket.close();
+//                androidAudioSocket = null;
+//            }
+
             mCameraManager.onResume();
             mPreview.setCamera(mCameraManager.getCamera());
         } catch (Exception e) {
