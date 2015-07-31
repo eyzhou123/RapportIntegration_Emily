@@ -402,7 +402,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         mic_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+                speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
 
 //                if (CameraPreview.recording) {
 //                    CameraPreview.recorder.stop();
