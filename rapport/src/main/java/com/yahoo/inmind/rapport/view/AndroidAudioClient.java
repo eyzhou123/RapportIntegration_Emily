@@ -67,7 +67,7 @@ public class AndroidAudioClient extends Thread {
 			while(sendingAndroidAudio == true) {
 				//reading data from MIC into buffer
 				int read = recorder.read(buffer, 0, buffer.length);
-				Log.d("ERRORCHECK", "read: " + read);
+
 
 				outputStream.write(intToBytes(read));
 				outputStream.write(buffer);

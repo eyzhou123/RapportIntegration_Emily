@@ -661,10 +661,10 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
         closeSocketClient();
 
-        if( mThread != null ) {
-            mThread.close();
-            mThread = null;
-        }
+//        if( mThread != null ) {
+//            mThread.close();
+//            mThread = null;
+//        }
 
         if (androidAudioSocket != null) {
             androidAudioSocket.close();
@@ -719,15 +719,12 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onRestart() {
         super.onRestart();
         // need a new camera object
-        mCameraManager = new CameraManager(this);
-        mPreview = new CameraPreview(this, mCameraManager.getCamera());
-        FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
-        preview.addView(mPreview);
+//        mCameraManager = new CameraManager(this);
+//        mPreview = new CameraPreview(this, mCameraManager.getCamera());
+//        FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
+//        preview.addView(mPreview);
 
     }
-
-
-
 
 
     // The following two functions are used for the woz view.

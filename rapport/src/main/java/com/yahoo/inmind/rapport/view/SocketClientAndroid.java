@@ -20,7 +20,7 @@ public class SocketClientAndroid extends Thread {
 	private static final String TAG = "socket";
 	private String mIP = RapportReaderActivity.server_ip;
 	private int mPort = 8880;
-	
+
 //	public SocketClientAndroid(CameraPreview preview, String ip, int port) {
 //	    mCameraPreview = preview;
 //	    if (mCameraPreview == null) {
@@ -30,90 +30,90 @@ public class SocketClientAndroid extends Thread {
 //	    mPort = port;
 //		start();
 //	}
-//	
+//
 //	public SocketClientAndroid(CameraPreview preview) {
 //	    mCameraPreview = preview;
 //		start();
 //	}
-	
+
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		super.run();
-		
+
 		try {
 			mSocket = new Socket();
 			mSocket.connect(new InetSocketAddress(mIP, mPort), 10000); // hard-code server address
-			
+
 			BufferedOutputStream outputStream = new BufferedOutputStream(mSocket.getOutputStream());
 			BufferedInputStream inputStream = new BufferedInputStream(mSocket.getInputStream());
-			
+
 			mCameraPreview = RapportReaderActivity.mPreview;
-			
+
 			JsonObject jsonObj = new JsonObject();
-            jsonObj.addProperty("type", "data");
-            jsonObj.addProperty("length", mCameraPreview.getPreviewLength());
-            jsonObj.addProperty("width", mCameraPreview.getPreviewWidth());
-            jsonObj.addProperty("height", mCameraPreview.getPreviewHeight());
-           
+			jsonObj.addProperty("type", "data");
+			jsonObj.addProperty("length", mCameraPreview.getPreviewLength());
+			jsonObj.addProperty("width", mCameraPreview.getPreviewWidth());
+			jsonObj.addProperty("height", mCameraPreview.getPreviewHeight());
+
 			byte[] buff = new byte[256];
 			int len = 0;
-            String msg = null;
-            
-            outputStream.write(jsonObj.toString().getBytes());
-            outputStream.flush();
-            
-            
-          
-            while ((len = inputStream.read(buff)) != -1) {
-                msg = new String(buff, 0, len);
-                
-                // JSON analysis
-                JsonParser parser = new JsonParser();
-                boolean isJSON = true;
-                JsonElement element = null;
-                try {
-                    element =  parser.parse(msg);
-                }
-                catch (JsonParseException e) {
-                    Log.e(TAG, "exception: " + e);
-                    isJSON = false;
-                }
-                
-                if (isJSON && element != null) {
-                    JsonObject obj = element.getAsJsonObject();
-                    element = obj.get("state");
-                    if (element != null && element.getAsString().equals("ok")) {
-                        // send data
-                        while (true) {
+			String msg = null;
+
+			outputStream.write(jsonObj.toString().getBytes());
+			outputStream.flush();
+
+
+
+			while ((len = inputStream.read(buff)) != -1) {
+				msg = new String(buff, 0, len);
+
+				// JSON analysis
+				JsonParser parser = new JsonParser();
+				boolean isJSON = true;
+				JsonElement element = null;
+				try {
+					element =  parser.parse(msg);
+				}
+				catch (JsonParseException e) {
+					Log.e(TAG, "exception: " + e);
+					isJSON = false;
+				}
+
+				if (isJSON && element != null) {
+					JsonObject obj = element.getAsJsonObject();
+					element = obj.get("state");
+					if (element != null && element.getAsString().equals("ok")) {
+						// send data
+						while (true) {
 //                        	byte[] byt = mCameraPreview.getImageBuffer();
 //                        	if (byt == null) {
 //                        		Log.d("ERRORCHECK", "NULL IMAGEBUFFER");
 //                        	} else if (byt.length == 0) {
 //                        		Log.d("ERRORCHECK", "EMPTY IMAGEBUFFER");
 //                        	}
-                        	
-                        	while (CameraPreview.mQueue.size() == 0) {
-                        		Thread.sleep(200);
-                        	}
+
+							while (CameraPreview.mQueue.size() == 0) {
+								Thread.sleep(200);
+							}
 //                        	Log.d("ERRORCHECK", "sending cam_data");
-                        	byte[] cam_data = mCameraPreview.getImageBuffer();
-                        	
-                        	outputStream.write(intToBytes(cam_data.length));
-                            outputStream.write(cam_data);
-                            outputStream.flush();
+							byte[] cam_data = mCameraPreview.getImageBuffer();
+                            Log.d("ERRORCHECK", "size of cam buff: " + cam_data.length);
+							outputStream.write(intToBytes(cam_data.length));
+							outputStream.write(cam_data);
+							outputStream.flush();
 //                            Log.d("ERRORCHECK", "SENT");
-                            if (Thread.currentThread().isInterrupted())
-                                break;
-                        }
-                        
-                        break;
-                    }
-                }
-                else {
-                    break;
-                }
-            }
+//							if (Thread.currentThread().isInterrupted())
+//								break;
+						}
+
+//						break;
+					}
+				}
+				else {
+					break;
+				}
+			}
 
 			outputStream.close();
 			inputStream.close();
@@ -121,8 +121,8 @@ public class SocketClientAndroid extends Thread {
 			// TODO Auto-generated catch block
 //			e.printStackTrace();
 			Log.e(TAG, e.toString());
-		} 
-		
+		}
+
 //		finally {
 //			try {
 //				Log.d("ERRORCHECK", "CLOSED");
@@ -134,7 +134,7 @@ public class SocketClientAndroid extends Thread {
 //			}
 //		}
 	}
-	
+
 	public void close() {
 		if (mSocket != null) {
 			try {
@@ -145,9 +145,8 @@ public class SocketClientAndroid extends Thread {
 			}
 		}
 	}
-	
+
 	public static byte[] intToBytes(int yourInt) throws IOException {
 		return ByteBuffer.allocate(4).putInt(yourInt).array();
 	}
-	
 }
