@@ -37,6 +37,8 @@
      <item android:id="@+id/action_toDesk" android:title="changeToDeskIp"></item>
      <item android:id="@+id/action_toLap" android:title="changeToLapIp"></item>
      <item android:id="@+id/edit_ip" android:title="Edit IP Address"></item>
-     <item android:id="@+id/record" android:title="Start Recording"></item>
+     <!--<item android:id="@+id/record" android:title="Start Recording"></item>-->
+     <item android:id="@+id/userID" android:title="Enter User ID"></item>
+
 
 </menu>

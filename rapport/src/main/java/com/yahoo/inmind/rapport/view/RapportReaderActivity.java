@@ -5,18 +5,10 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Camera;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.drawable.AnimationDrawable;
-import android.media.AudioManager;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
-import android.media.ToneGenerator;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -45,15 +37,11 @@ import com.unity3d.player.UnityPlayer;
 import com.yahoo.inmind.control.reader.ReaderController;
 import com.yahoo.inmind.control.util.Constants;
 import com.yahoo.inmind.rapport.R;
-import com.yahoo.inmind.view.handler.UIHandler;
 import com.yahoo.inmind.view.reader.ReaderMainActivity;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -102,6 +90,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     private AudioClient audioclient;
     private ReaderController readerController;
 
+    private EditText newID;
+    public static String user_ID = "";
+
     private Socket socket_NLG;
     private volatile boolean stop_NLG_thread = false;
 
@@ -113,7 +104,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     private SpeechRecognizer speechRecognizer;
     private int currentNewsId;
     private int newsItemNum;
-
+    private boolean not_first_start = false;
 
 
 
@@ -282,10 +273,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         final int button_panel_height = height/16;
 
         //TODO: ojrl
-        mCameraManager = new CameraManager(this);
-	    mPreview = new CameraPreview(this, mCameraManager.getCamera());
-	    FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
-        preview.addView(mPreview);
+
 
         // EZ: Created an "outside" layout that contains all the other layouts, so that
         // it can also have a sliding drawer
@@ -404,28 +392,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             @Override
             public void onClick(View v) {
                 speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
-
-//                if (CameraPreview.recording) {
-//                    CameraPreview.recorder.stop();
-//                    if (CameraPreview.usecamera) {
-//                        try {
-//                            CameraPreview.mCamera.reconnect();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                    // recorder.release();
-//                    CameraPreview.recording = false;
-//                    Log.v("ERRORCHECK", "Recording Stopped");
-//                    // Let's prepareRecorder so we can record again
-//                    CameraPreview.prepareRecorder();
-//
-//
-//                } else {
-//                    CameraPreview.recording = true;
-//                    CameraPreview.recorder.start();
-//                    Log.v("ERRORCHECK", "Recording Started");
-//                }
             }
         });
 
@@ -450,7 +416,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
                     news_button.setBackgroundResource(R.drawable.news_button);
                     layoutMain.removeView(layoutLeft);
                     layoutMain.addView(layoutLeft,DrawerLayout.LayoutParams.MATCH_PARENT, news_height );
-                    layoutMain.addView(layoutRight,DrawerLayout.LayoutParams.MATCH_PARENT, assistant_height);
+                    layoutMain.addView(layoutRight, DrawerLayout.LayoutParams.MATCH_PARENT, assistant_height);
                 }
                 if (both_mode_clicked) {
                     both_mode_clicked = false;
@@ -545,7 +511,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         });
 
         // WoZ mode
-        stream_button.setOnClickListener(new OnClickListener(){
+        stream_button.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 if (assistant_button_clicked) {
                     assistant_button_clicked = false;
@@ -590,6 +556,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
 //        // Let the initial view be the assistant view
         both_mode_button.performClick();
+
 
 //         //-----------------------------------------------------------------------------------
 
@@ -637,39 +604,30 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         super.onStop();
         Log.d("ERRORCHECK", "Closing android socket client");
 
-        if (CameraPreview.recording) {
-            CameraPreview.recorder.stop();
-            if (CameraPreview.usecamera) {
-                try {
-                    CameraPreview.mCamera.reconnect();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            // recorder.release();
-            CameraPreview.recording = false;
-            Log.v("ERRORCHECK", "Recording Stopped");
-            // Let's prepareRecorder so we can record again
-            CameraPreview.prepareRecorder();
-        }
-
-        if (mPreview != null) {
-            FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
-            preview.removeView(mPreview);
-            mPreview = null;
-        }
-
-        closeSocketClient();
-
-//        if( mThread != null ) {
-//            mThread.close();
-//            mThread = null;
+//        if (CameraPreview.recording) {
+//            CameraPreview.recorder.stop();
+//            if (CameraPreview.usecamera) {
+//                try {
+//                    CameraPreview.mCamera.reconnect();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//            // recorder.release();
+//            CameraPreview.recording = false;
+//            Log.v("ERRORCHECK", "Recording Stopped");
+//            // Let's prepareRecorder so we can record again
+//            CameraPreview.prepareRecorder();
 //        }
 
-        if (androidAudioSocket != null) {
-            androidAudioSocket.close();
-            androidAudioSocket = null;
-        }
+//        if (mPreview != null) {
+//            FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
+//            preview.removeView(mPreview);
+//            mPreview = null;
+//        }
+
+        closeSocketClient();
+        closeAndroidClient();
 
         stop_NLG_thread = true;
         if (socket_NLG != null) {
@@ -689,12 +647,14 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onStart(){
         super.onStart();
 
-//        mThread = new SocketClientAndroid();
-//        mThread.start();
+//        if (not_first_start) {
+//            mThread = new SocketClientAndroid();
+//            mThread.start();
 //
-//        androidAudioSocket = new AndroidAudioClient();
-//        androidAudioSocket.start();
-
+//            androidAudioSocket = new AndroidAudioClient();
+//            androidAudioSocket.start();
+//        }
+//        not_first_start = true;
         // Start the NLG and DM sockets
         stop_NLG_thread = false;
         new Thread(new ClientThreadForNLG()).start();
@@ -703,7 +663,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     @Override
     protected void onPause() {
         super.onPause();
-
+        
 //        if( mThread != null ) {
 //            mThread.close();
 //            mThread = null;
@@ -800,34 +760,60 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
                 dialog.show();
                 return true;
-            case R.id.record:
-                if(item.getTitle().equals(new String("Start Recording"))){
-                    item.setTitle("Stop Recording");
-                    if(!CameraPreview.recording) {
-                        CameraPreview.recording = true;
-                        CameraPreview.recorder.start();
-                        Log.v("ERRORCHECK", "Recording Started");
-                    }
+//            case R.id.record:
+//                if(item.getTitle().equals(new String("Start Recording"))){
+//                    item.setTitle("Stop Recording");
+//                    if(!CameraPreview.recording) {
+//                        CameraPreview.recording = true;
+//                        CameraPreview.recorder.start();
+//                        Log.v("ERRORCHECK", "Recording Started");
+//                    }
+//
+//                }else{
+//                    item.setTitle("Start Recording");
+//                    if (CameraPreview.recording) {
+//                        CameraPreview.recorder.stop();
+//                        if (CameraPreview.usecamera) {
+//                            try {
+//                                CameraPreview.mCamera.reconnect();
+//                            } catch (IOException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                        Log.v("ERRORCHECK", "Recording Stopped");
+//                    }
+//                }
+//                break;
+            case R.id.userID:
+                // Opens a dialog box for input of new IP address
+                final Dialog dialog_ID = new Dialog(this);
+                dialog_ID.setContentView(R.layout.rapport_id_dialog);
+                dialog_ID.setTitle("Edit User ID");
+                TextView text_ID = (TextView) dialog_ID.findViewById(R.id.rapport_enter_ID_text);
+                text_ID.setText("Enter a User ID: ");
+                Button dialogButton_ID = (Button) dialog_ID.findViewById(R.id.rapport_enter_ID_OK);
+                newID = (EditText) dialog_ID.findViewById(R.id.rapport_enter_ID);
+                newID.setText(user_ID, TextView.BufferType.EDITABLE);
 
-                }else{
-                    item.setTitle("Start Recording");
-                    if (CameraPreview.recording) {
-                        CameraPreview.recorder.stop();
-                        if (CameraPreview.usecamera) {
-                            try {
-                                CameraPreview.mCamera.reconnect();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                // if OK button is clicked, close the custom dialog
+                dialogButton_ID.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (newID.getText().toString() != " ") {
+                            user_ID = newID.getText().toString();
+                            Toast.makeText(getApplicationContext(), "User ID: " + user_ID,
+                                    Toast.LENGTH_LONG).show();
                         }
-                        Log.v("ERRORCHECK", "Recording Stopped");
+                        dialog_ID.dismiss();
                     }
-                }
-                break;
+                });
+
+                dialog_ID.show();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-        return true;
+//        return true;
     }
 
 
@@ -856,8 +842,12 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 //                androidAudioSocket = null;
 //            }
 
-            mCameraManager.onResume();
-            mPreview.setCamera(mCameraManager.getCamera());
+//            mCameraManager.onResume();
+//            mPreview.setCamera(mCameraManager.getCamera());
+            mCameraManager = new CameraManager(this);
+            mPreview = new CameraPreview(this, mCameraManager.getCamera());
+            FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
+            preview.addView(mPreview);
         } catch (Exception e) {
             e.printStackTrace();
         }

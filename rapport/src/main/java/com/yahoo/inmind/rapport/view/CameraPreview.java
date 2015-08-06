@@ -87,37 +87,23 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceCreated(SurfaceHolder holder) {
         Log.v("ERRORCHECK", "surfaceCreated");
         if(mCamera == null) return;
-        if (usecamera) {
-            try {
-                Parameters parameters = mCamera.getParameters();
+
+        try {
+            Parameters parameters = mCamera.getParameters();
 
 //                mCamera.setDisplayOrientation(90);
 
-                mCamera.setParameters(parameters);
-                mCamera.setPreviewDisplay(holder);
-                mCamera.startPreview();
-                previewRunning = true;
-            } catch (IOException e) {
-                Log.d(TAG, "Error setting camera preview: " + e.getMessage());
-            }
+            mCamera.setParameters(parameters);
+            mCamera.setPreviewDisplay(holder);
+            mCamera.startPreview();
+            previewRunning = true;
+        } catch (IOException e) {
+            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
         }
-
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.v("ERRORCHECK", "surfaceDestroyed");
-        if (recording) {
-            recorder.stop();
-            recording = false;
-        }
-        recorder.release();
-        if (usecamera && mCamera != null) {
-            previewRunning = false;
-            mCamera.stopPreview();
-            mCamera.setPreviewCallback(null);
-            mCamera.release();
-            mCamera = null;
-        }
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
@@ -126,30 +112,28 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
           return;
         }
 
-        if (!recording && usecamera) {
-            if (previewRunning) {
-                try {
-                    mCamera.stopPreview();
-                    resetBuff();
-
-                } catch (Exception e) {
-
-                }
-            }
-
+        if (previewRunning) {
             try {
-
-                mCamera.setPreviewCallback(mPreviewCallback);
-                mCamera.setPreviewDisplay(mHolder);
-                mCamera.startPreview();
-                previewRunning = true;
+                mCamera.stopPreview();
+                resetBuff();
 
             } catch (Exception e) {
-                Log.d(TAG, "Error starting camera preview: " + e.getMessage());
-            }
 
-            prepareRecorder();
+            }
         }
+
+        try {
+
+            mCamera.setPreviewCallback(mPreviewCallback);
+            mCamera.setPreviewDisplay(mHolder);
+            mCamera.startPreview();
+            previewRunning = true;
+
+        } catch (Exception e) {
+            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+        }
+
+
     }
 
     public static void prepareRecorder() {
@@ -166,15 +150,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         recorder.setOrientationHint(270);
         recorder.setProfile(camcorderProfile);
 
-//        if (camcorderProfile.fileFormat == MediaRecorder.OutputFormat.THREE_GPP) {
-//            try {
-//                File newFile = File.createTempFile("videocapture", ".3gp", Environment.getExternalStorageDirectory());
-//                recorder.setOutputFile(newFile.getAbsolutePath());
-//            } catch (IOException e) {
-//                Log.v("ERRORCHECK","Couldn't create file");
-//                e.printStackTrace();
-////                finish();
-//            }
         if (camcorderProfile.fileFormat == MediaRecorder.OutputFormat.MPEG_4) {
             try {
                 File newFile = File.createTempFile("videocapture", ".mp4", Environment.getExternalStorageDirectory());
@@ -195,8 +170,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             }
 
         }
-        //recorder.setMaxDuration(50000); // 50 seconds
-        //recorder.setMaxFileSize(5000000); // Approximately 5 megabytes
 
         try {
             recorder.prepare();

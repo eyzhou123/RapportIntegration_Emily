@@ -13,6 +13,7 @@ public class CameraManager {
 		mContext = context;
 		// Create an instance of Camera
         mCamera = getCameraInstance();
+
 	}
 
 	public Camera getCamera() {
