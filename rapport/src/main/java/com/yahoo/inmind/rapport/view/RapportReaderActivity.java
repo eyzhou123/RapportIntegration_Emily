@@ -604,31 +604,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
         super.onStop();
         Log.d("ERRORCHECK", "Closing android socket client");
 
-//        if (CameraPreview.recording) {
-//            CameraPreview.recorder.stop();
-//            if (CameraPreview.usecamera) {
-//                try {
-//                    CameraPreview.mCamera.reconnect();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            // recorder.release();
-//            CameraPreview.recording = false;
-//            Log.v("ERRORCHECK", "Recording Stopped");
-//            // Let's prepareRecorder so we can record again
-//            CameraPreview.prepareRecorder();
-//        }
-
-//        if (mPreview != null) {
-//            FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
-//            preview.removeView(mPreview);
-//            mPreview = null;
-//        }
-
-//        closeSocketClient();
-//        closeAndroidClient();
-
         stop_NLG_thread = true;
         if (socket_NLG != null) {
             try {
@@ -647,14 +622,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     protected void onStart(){
         super.onStart();
 
-//        if (not_first_start) {
-//            mThread = new SocketClientAndroid();
-//            mThread.start();
-//
-//            androidAudioSocket = new AndroidAudioClient();
-//            androidAudioSocket.start();
-//        }
-//        not_first_start = true;
         // Start the NLG and DM sockets
         stop_NLG_thread = false;
         new Thread(new ClientThreadForNLG()).start();
@@ -676,26 +643,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
             CameraPreview.mCamera.release();
             CameraPreview.mCamera = null;
         }
-
-//        if( mThread != null ) {
-//            mThread.close();
-//            mThread = null;
-//        }
-//
-//        if (androidAudioSocket != null) {
-//            androidAudioSocket.close();
-//            androidAudioSocket = null;
-//        }
-    }
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        // need a new camera object
-//        mCameraManager = new CameraManager(this);
-//        mPreview = new CameraPreview(this, mCameraManager.getCamera());
-//        FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
-//        preview.addView(mPreview);
 
     }
 
@@ -773,30 +720,7 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
                 dialog.show();
                 return true;
-//            case R.id.record:
-//                if(item.getTitle().equals(new String("Start Recording"))){
-//                    item.setTitle("Stop Recording");
-//                    if(!CameraPreview.recording) {
-//                        CameraPreview.recording = true;
-//                        CameraPreview.recorder.start();
-//                        Log.v("ERRORCHECK", "Recording Started");
-//                    }
-//
-//                }else{
-//                    item.setTitle("Start Recording");
-//                    if (CameraPreview.recording) {
-//                        CameraPreview.recorder.stop();
-//                        if (CameraPreview.usecamera) {
-//                            try {
-//                                CameraPreview.mCamera.reconnect();
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                        Log.v("ERRORCHECK", "Recording Stopped");
-//                    }
-//                }
-//                break;
+
             case R.id.userID:
                 // Opens a dialog box for input of new IP address
                 final Dialog dialog_ID = new Dialog(this);
@@ -835,7 +759,6 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     {
         super.onWindowFocusChanged(hasFocus);
 
-        //TODO: ojrl
         mUnityPlayer.windowFocusChanged(hasFocus);
     }
 
@@ -843,20 +766,9 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     @Override
     protected void onResume() {
         super.onResume();
-        //TODO: ojrl
         try {
-//            if (mThread == null) {
-//                mThread = new SocketClientAndroid();
-//                mThread.start();
-//            }
-//
-//            if (androidAudioSocket != null) {
-//                androidAudioSocket.close();
-//                androidAudioSocket = null;
-//            }
-
-//            mCameraManager.onResume();
-//            mPreview.setCamera(mCameraManager.getCamera());
+            // Need to create a new camera instance
+            // Need to setContentView again. Without it, app will crash due to 'method called after release()'
             DrawerLayout layoutOutside = (DrawerLayout) findViewById( ReaderController.news_drawer_layout );
             setContentView(layoutOutside);
             mCameraManager = new CameraManager(this);
