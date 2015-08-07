@@ -626,8 +626,8 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 //            mPreview = null;
 //        }
 
-        closeSocketClient();
-        closeAndroidClient();
+//        closeSocketClient();
+//        closeAndroidClient();
 
         stop_NLG_thread = true;
         if (socket_NLG != null) {
@@ -663,7 +663,20 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
     @Override
     protected void onPause() {
         super.onPause();
-        
+        closeSocketClient();
+        closeAndroidClient();
+
+        FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
+        preview.removeView(mPreview);
+
+        if (CameraPreview.mCamera != null) {
+            CameraPreview.mCamera.stopPreview();
+            CameraPreview.mCamera.setPreviewCallback(null);
+            CameraPreview.mCamera.lock();
+            CameraPreview.mCamera.release();
+            CameraPreview.mCamera = null;
+        }
+
 //        if( mThread != null ) {
 //            mThread.close();
 //            mThread = null;
@@ -844,10 +857,13 @@ public class RapportReaderActivity extends ReaderMainActivity implements DataLis
 
 //            mCameraManager.onResume();
 //            mPreview.setCamera(mCameraManager.getCamera());
+            DrawerLayout layoutOutside = (DrawerLayout) findViewById( ReaderController.news_drawer_layout );
+            setContentView(layoutOutside);
             mCameraManager = new CameraManager(this);
             mPreview = new CameraPreview(this, mCameraManager.getCamera());
             FrameLayout preview = (FrameLayout) findViewById(R.id.rapport_camera_preview);
             preview.addView(mPreview);
+            CameraPreview.mCamera.setPreviewCallback(null);
         } catch (Exception e) {
             e.printStackTrace();
         }
